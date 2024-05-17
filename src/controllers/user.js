@@ -129,42 +129,83 @@ const login = async (req, res) => {
   }
 };
 
+const getUserData = async (req, res) => {
+  try {
+    // Obtener el correo electrónico del almacenamiento local
+    const email = JSON.parse(localStorage.getItem('authToken')).email;
+
+    const connection = await createConnection();
+    const [rows] = await connection.execute('SELECT edad, altura, peso, exercise_level FROM userapp WHERE email = ?', [email]);
+
+    if (rows.length === 1) {
+      const userData = rows[0];
+
+      await connection.end();
+
+      return res.status(200).json({
+        success: true,
+        data: userData
+      });
+    } else {
+      await connection.end();
+      return res.status(401).json({
+        success: false,
+        error: "Usuario no encontrado"
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      status: false,
+      error: "Problemas al obtener la información del usuario",
+      code: error
+    });
+  }
+}
 
 const updateUser = async (req, res) => {
   try {
-    const { edad, altura, peso, exercise_level } = req.body;
-    const token = req.headers['authorization'];
+    const { email, password, edad, altura, peso, exercise_level } = req.body;
 
-    if (!token) {
-      return res.status(403).json({ error: 'Se requiere un token para la autenticación' });
+    // Comprobar que el correo electrónico y la contraseña están presentes
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Faltan campos requeridos' });
     }
 
-    jwt.verify(token, 'secret-key', async (err, decoded) => {
-      if (err) {
-        return res.status(500).json({ error: 'Falló la autenticación del token.' });
+    const connection = await createConnection();
+    const [rows] = await connection.execute('SELECT * FROM userapp WHERE email = ?', [email]);
+
+    if (rows.length === 1) {
+      const user = rows[0];
+
+      // Verificar la contraseña
+      const passwordIsValid = await bcrypt.compare(password, user.password);
+      if (!passwordIsValid) {
+        await connection.end();
+        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
       }
 
-      const id = decoded.id;
-
-      const connection = await createConnection();
-      const [rows] = await connection.execute('SELECT * FROM userapp WHERE ID = ?', [id]);
-
-      if (rows.length === 1) {
-        await connection.execute('UPDATE userapp SET edad = ?, altura = ?, peso = ?, exercise_level = ? WHERE ID = ?', [edad, altura, peso, exercise_level, id]);
-        await connection.end();
-
-        return res.status(200).json({
-          success: true,
-          message: "Información del usuario actualizada con éxito"
-        });
-      } else {
-        await connection.end();
-        return res.status(401).json({
-          success: false,
-          error: "Usuario no encontrado"
-        });
+      // Actualizar solo los campos que se proporcionaron
+      const fieldsToUpdate = { edad, altura, peso, exercise_level };
+      for (const field in fieldsToUpdate) {
+        if (fieldsToUpdate[field] !== undefined) {
+          await connection.execute(`UPDATE userapp SET ${field} = ? WHERE email = ?`, [fieldsToUpdate[field], email]);
+        }
       }
-    });
+
+      await connection.end();
+
+      return res.status(200).json({
+        success: true,
+        message: "Información del usuario actualizada con éxito"
+      });
+    } else {
+      await connection.end();
+      return res.status(401).json({
+        success: false,
+        error: "Usuario no encontrado"
+      });
+    }
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -214,5 +255,6 @@ export {
     getUsuarios,
     setUsuario,
     changePassword,
+    getUserData,
     updateUser
 }

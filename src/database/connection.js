@@ -6,10 +6,14 @@ database. It includes the following properties: */
 const connectionConfig = {
     host: values.HOST,
     user: values.USER,
-    // password: 'Informatica2022.-',
+    password: values.PASSWORD,
     database: values.DATABASE
 };
 /* The code is creating a connection to a MySQL database using the `mysql2` library. */
+/* Print the host, user, and password */
+console.log('Host:', connectionConfig.host);
+console.log('User:', connectionConfig.user);
+console.log('Password:', connectionConfig.password);
 
 const connection = mysql2.createConnection({
     host: connectionConfig.host,

@@ -70,6 +70,92 @@ ALTER TABLE `userapp`
   MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 COMMIT;
 
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `userapp`
+--
+
+CREATE TABLE `tecnica_ejercicios` (
+  `ID` int(11) NOT NULL,
+  `nombre_ejercicio` varchar(255) DEFAULT NULL,
+  `descripcion` TEXT DEFAULT NULL,
+  `image_url` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Indices de la tabla `userapp`
+--
+ALTER TABLE `tecnica_ejercicios`
+  ADD PRIMARY KEY (`ID`)
+
+-- AUTO_INCREMENT de la tabla `userapp`
+--
+ALTER TABLE `tecnica_ejercicios`
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+COMMIT;
+
+
+-- --------------------------------------------------------
+
+-- Create the `rutinas` table
+CREATE TABLE `rutinas` (
+  `ID` int(11) NOT NULL,
+  `nombre_rutina` varchar(255) NOT NULL,
+  `ejercicio_id` int(11) NOT NULL,
+  `series` int(11) NOT NULL,
+  `repeticiones` int(11) NOT NULL,
+  `peso` decimal(5,2) DEFAULT NULL,
+  `sensores` varchar(255) DEFAULT NULL,
+  FOREIGN KEY (`ejercicio_id`) REFERENCES `tecnica_ejercicios`(`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Add primary key to `rutinas` table
+ALTER TABLE `rutinas`
+  ADD PRIMARY KEY (`ID`);
+
+-- Add auto_increment to `rutinas` table
+ALTER TABLE `rutinas`
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+COMMIT;
+
+-- Create the `users_rutinas` table to link users with routines
+CREATE TABLE `users_rutinas` (
+  `user_id` int(11) NOT NULL,
+  `rutina_id` int(11) NOT NULL,
+  FOREIGN KEY (`user_id`) REFERENCES `userapp`(`ID`),
+  FOREIGN KEY (`rutina_id`) REFERENCES `rutinas`(`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Add primary key to `users_rutinas` table
+ALTER TABLE `users_rutinas`
+  ADD PRIMARY KEY (`user_id`, `rutina_id`);
+
+-- --------------------------------------------------------
+
+-- Create the `rutina_ejercicios` table to link routines with exercises
+CREATE TABLE `rutina_ejercicios` (
+  `ID` int(11) NOT NULL,
+  `rutina_id` int(11) NOT NULL,
+  `ejercicio_id` int(11) NOT NULL,
+  `series` int(11) NOT NULL,
+  `repeticiones` int(11) NOT NULL,
+  `peso` decimal(5,2) DEFAULT NULL,
+  `sensores` varchar(255) DEFAULT NULL,
+  FOREIGN KEY (`rutina_id`) REFERENCES `rutinas`(`ID`),
+  FOREIGN KEY (`ejercicio_id`) REFERENCES `tecnica_ejercicios`(`ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Add primary key to `rutina_ejercicios` table
+ALTER TABLE `rutina_ejercicios`
+  ADD PRIMARY KEY (`ID`);
+
+-- Add auto_increment to `rutina_ejercicios` table
+ALTER TABLE `rutina_ejercicios`
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+COMMIT;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

@@ -249,12 +249,115 @@ const changePassword = async (req, res) => {
     });
   }
 };
+const createRoutine = async (req, res) => {
+  try {
+    const { email, password, routine_name, description } = req.body;
 
+    // Comprobar que el correo electrónico y la contraseña están presentes
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+
+    const connection = await createConnection();
+    const [rows] = await connection.execute('SELECT * FROM userapp WHERE email = ?', [email]);
+
+    if (rows.length === 1) {
+      const user = rows[0];
+
+      // Verificar la contraseña
+      const passwordIsValid = await bcrypt.compare(password, user.password);
+      if (!passwordIsValid) {
+        await connection.end();
+        return res.status(401).json({ success: false, error: 'Contraseña incorrecta' });
+      }
+
+      // Crear la rutina
+      const [results] = await connection.execute(
+        'INSERT INTO exercise_routine (user_id, routine_name, description) VALUES (?, ?, ?)',
+        [user.id, routine_name, description]
+      );
+      await connection.end();
+      return res.status(201).json({ success: true, message: 'Rutina creada', routineId: results.insertId });
+    } else {
+      await connection.end();
+      return res.status(401).json({
+        success: false,
+        error: "Usuario no encontrado"
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Error al crear rutina", code: error.message });
+  }
+};
+
+const getRoutines = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const connection = await createConnection();
+    const [results] = await connection.query('SELECT * FROM exercise_routine WHERE user_id = ?', [userId]);
+    await connection.end();
+    return res.json(results);
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Error al obtener rutinas", code: error.message });
+  }
+};
+
+const getRoutineExercises = async (req, res) => {
+  try {
+    const { routineId } = req.params;
+    const connection = await createConnection();
+    const [results] = await connection.query('SELECT * FROM routine_exercises WHERE routine_id = ?', [routineId]);
+    await connection.end();
+    return res.json(results);
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Error al obtener ejercicios", code: error.message });
+  }
+};
+
+const addExerciseToRoutine = async (req, res) => {
+  try {
+    const { routineId } = req.params;
+    const { day, exercise_name, exercise_type, duration_minutes, sets, repetitions } = req.body;
+    const connection = await createConnection();
+    const [results] = await connection.execute(
+      'INSERT INTO routine_exercises (routine_id, day, exercise_name, exercise_type, duration_minutes, sets, repetitions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [routineId, day, exercise_name, exercise_type, duration_minutes, sets, repetitions]
+    );
+    await connection.end();
+    return res.status(201).json({ success: true, message: 'Ejercicio añadido', exerciseId: results.insertId });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: "Error al añadir ejercicio", code: error.message });
+  }
+};
+const getUserId = async (req, res) => {
+  try {
+    const userEmail = req.user.email;
+    const connection = await createConnection();
+    const [results] = await connection.query('SELECT ID FROM userapp WHERE email = ?', [userEmail]);
+    await connection.end();
+
+    if (results.length === 0) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+
+    const userId = results[0].ID;
+    return res.status(200).json({ success: true, userId });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ success: false, error: 'Error al obtener el ID del usuario', code: error.message });
+  }
+};
 export {
     login,
     getUsuarios,
     setUsuario,
     changePassword,
     getUserData,
-    updateUser
+    updateUser,
+    createRoutine,
+    getRoutines,
+    getRoutineExercises,
+    addExerciseToRoutine,
+    getUserId,
+
 }

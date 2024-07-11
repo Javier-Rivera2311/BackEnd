@@ -2,8 +2,7 @@
 defines two routes: */
 import { Router } from 'express';
 
-import { getUsuarios, setUsuario, changePassword, login,updateUser, getUserData} from '../controllers/user.js';
-
+import { getUsuarios, setUsuario, changePassword, login,updateUser, getUserData, createRoutine, getRoutines, getRoutineExercises, addExerciseToRoutine,getUserId} from '../controllers/user.js';
 
 const router = Router();
 
@@ -24,6 +23,21 @@ router.route('/updateUser')
 
 router.route('/getUserData')
     .get(getUserData);
+
+router.route('/createRoutine')
+    .post(createRoutine);
+
+    router.route('/getRoutines')
+    .get(getRoutines);
+
+router.route('/getRoutineExercises')
+    .get(getRoutineExercises);
+
+router.route('/addExerciseToRoutine')
+    .post(addExerciseToRoutine);
+
+router.route('/getUserId')
+    .post(getUserId);
 
 export default router;
 
